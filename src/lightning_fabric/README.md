@@ -77,10 +77,6 @@ ______________________________________________________________________
 > Don’t know what this is? Follow our [beginner guide here](https://lightning.ai/docs/stable/install/installation.html).
 
 - Python 3.8.x or later (3.8.x, 3.9.x, 3.10.x, ...)
-- Git
-- Set up an alias for python=python3
-- Add the root folder of Lightning to the Environment Variables to PATH
-- (quick-start app requirement) Install Z shell (zsh)
 
 </details>
 
