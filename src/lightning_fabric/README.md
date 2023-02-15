@@ -141,7 +141,7 @@ ______________________________________________________________________
 
 ## Can I use Fabric with my LightningModule or Lightning Callback?
 
-Yes :) Fabric works with all Lightning features, so you can choose how to structure your code and reuse existing models and callbacks as you with.
+Yes :) Fabric works with all Lightning features, so you can choose how to structure your code and reuse existing models and callbacks as you wish.
 
 <img src="https://lightningaidev.wpengine.com/wp-content/uploads/2023/02/Screen-Shot-2023-02-15-at-3.19.08-PM.png" width="800px">
 
