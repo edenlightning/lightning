@@ -1,19 +1,18 @@
 <div align="center">
-
-**NEWS: PyTorch Lightning has been renamed Lightning!**
-
 <img src="https://github.com/likethecognac/images/blob/main/Icon_Color_WhiteBolt.png" width="85px">
 
 **The Deep Learning framework to train, deploy, and ship AI products Lightning fast.**
 
+**NEWS: PyTorch Lightning has been renamed Lightning!**
+
 ______________________________________________________________________
 
 <p align="center">
-  <a href="https://www.lightning.ai/">Lightning Gallery</a> •
-  <a href="#key-features">Key Features</a> •
-  <a href="#how-to-use">How To Use</a> •
+  <a href="https://www.lightning.ai/">Lightning.ai</a> •
+  <a href="src/pytorch_lightning/README.md">PyTorch Lightning</a> •
+  <a href="src/lightning_fabric/README.md">Fabric</a> •
+  <a href="src/lightning_app/README.md">Lightning Apps</a> •
   <a href="https://pytorch-lightning.readthedocs.io/en/stable/">Docs</a> •
-  <a href="#examples">Examples</a> •
   <a href="#community">Community</a> •
   <a href="https://pytorch-lightning.readthedocs.io/en/stable/generated/CONTRIBUTING.html">Contribute</a> •
   <a href="#license">License</a>
@@ -38,14 +37,345 @@ ______________________________________________________________________
 
 </div>
 
-###### \*Codecov is > 90%+ but build delays may show less
-
 ______________________________________________________________________
 
-## PyTorch Lightning is just organized PyTorch
+## Scale PyTorch With Fabric
 
-Lightning disentangles PyTorch code to decouple the science from the engineering.
+Fabric allows you to scale any PyTorch model to distributed machines while maintianing full control over your training loop. Just add a few lines of code and run on any device!
+
+<details>
+  <summary>Learn more about Fabric</summary>
+  
+  With just a few code changes, run any PyTorch model on any distributed hardware, no boilerplate!
+
+- Easily switch from running on CPU to GPU (Apple Silicon, CUDA, …), TPU, multi-GPU or even multi-node training
+- Use state-of-the-art distributed training strategies (DDP, FSDP, DeepSpeed) and mixed precision out of the box
+- All the device logic boilerplate is handled for you
+- Designed with multi-billion parameter models in mind
+- Build your own custom Trainer using Fabric primitives for training checkpointing, logging, and more
+
+```diff
++ import lightning as L
+  import torch
+  import torch.nn as nn
+  from torch.utils.data import DataLoader, Dataset
+  class PyTorchModel(nn.Module):
+      ...
+  class PyTorchDataset(Dataset):
+      ...
++ fabric = L.Fabric(accelerator="cuda", devices=8, strategy="ddp")
++ fabric.launch()
+- device = "cuda" if torch.cuda.is_available() else "cpu
+  model = PyTorchModel(...)
+  optimizer = torch.optim.SGD(model.parameters())
++ model, optimizer = fabric.setup(model, optimizer)
+  dataloader = DataLoader(PyTorchDataset(...), ...)
++ dataloader = fabric.setup_dataloaders(dataloader)
+  model.train()
+  for epoch in range(num_epochs):
+      for batch in dataloader:
+          input, target = batch
+-         input, target = input.to(device), target.to(device)
+          optimizer.zero_grad()
+          output = model(input)
+          loss = loss_fn(output, target)
+-         loss.backward()
++         fabric.backward(loss)
+          optimizer.step()
+          lr_scheduler.step()
+```
+
+### [Read more about Fabric](src/fabric/README.md)
+  
+</details>
+
+## Train and deploy with PyTorch Lightning
+
+PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code to decouple the science from the engineering.
 ![PT to PL](docs/source-pytorch/_static/images/general/pl_quick_start_full_compressed.gif)
+
+<details>
+  <summary>How to use PyTorch Lightning</summary>
+
+
+  ### Step 0: Install
+
+  Simple installation from PyPI
+
+  ```bash
+  pip install pytorch-lightning
+  ```
+
+  <!-- following section will be skipped from PyPI description -->
+
+  <details>
+    <summary>Other installation options</summary>
+      <!-- following section will be skipped from PyPI description -->
+
+  #### Install with optional dependencies
+
+  ```bash
+  pip install pytorch-lightning['extra']
+  ```
+
+  #### Conda
+
+  ```bash
+  conda install pytorch-lightning -c conda-forge
+  ```
+
+  #### Install stable version
+
+  Install future release from the source
+
+  ```bash
+  pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/release/stable.zip -U
+  ```
+
+  #### Install bleeding-edge
+
+  Install nightly from the source (no guarantees)
+
+  ```bash
+  pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/master.zip -U
+  ```
+
+  or from testing PyPI
+
+  ```bash
+  pip install -iU https://test.pypi.org/simple/ pytorch-lightning
+  ```
+
+  </details>
+  <!-- end skipping PyPI description -->
+
+  ### Step 1: Add these imports
+
+  ```python
+  import os
+  import torch
+  from torch import nn
+  import torch.nn.functional as F
+  from torchvision.datasets import MNIST
+  from torch.utils.data import DataLoader, random_split
+  from torchvision import transforms
+  import pytorch_lightning as pl
+  ```
+
+  ### Step 2: Define a LightningModule (nn.Module subclass)
+
+  A LightningModule defines a full *system* (ie: a GAN, autoencoder, BERT or a simple Image Classifier).
+
+  ```python
+  class LitAutoEncoder(pl.LightningModule):
+      def __init__(self):
+          super().__init__()
+          self.encoder = nn.Sequential(nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 3))
+          self.decoder = nn.Sequential(nn.Linear(3, 128), nn.ReLU(), nn.Linear(128, 28 * 28))
+
+      def forward(self, x):
+          # in lightning, forward defines the prediction/inference actions
+          embedding = self.encoder(x)
+          return embedding
+
+      def training_step(self, batch, batch_idx):
+          # training_step defines the train loop. It is independent of forward
+          x, y = batch
+          x = x.view(x.size(0), -1)
+          z = self.encoder(x)
+          x_hat = self.decoder(z)
+          loss = F.mse_loss(x_hat, x)
+          self.log("train_loss", loss)
+          return loss
+
+      def configure_optimizers(self):
+          optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+          return optimizer
+  ```
+
+  **Note: Training_step defines the training loop. Forward defines how the LightningModule behaves during inference/prediction.**
+
+  ### Step 3: Train!
+
+  ```python
+  dataset = MNIST(os.getcwd(), download=True, transform=transforms.ToTensor())
+  train, val = random_split(dataset, [55000, 5000])
+
+  autoencoder = LitAutoEncoder()
+  trainer = pl.Trainer()
+  trainer.fit(autoencoder, DataLoader(train), DataLoader(val))
+  ```
+
+  ## Advanced features
+
+  Lightning has over [40+ advanced features](https://pytorch-lightning.readthedocs.io/en/latest/common/trainer.html#trainer-flags) designed for professional AI research at scale.
+
+  Here are some examples:
+
+  <div align="center">
+    <img src="https://pl-bolts-doc-images.s3.us-east-2.amazonaws.com/features_2.jpg" max-height="600px">
+  </div>
+
+  <details>
+    <summary>Highlighted feature code snippets</summary>
+
+  ```python
+  # 8 GPUs
+  # no code changes needed
+  trainer = Trainer(max_epochs=1, accelerator="gpu", devices=8)
+
+  # 256 GPUs
+  trainer = Trainer(max_epochs=1, accelerator="gpu", devices=8, num_nodes=32)
+  ```
+
+  <summary>Train on TPUs without code changes</summary>
+
+  ```python
+  # no code changes needed
+  trainer = Trainer(accelerator="tpu", devices=8)
+  ```
+
+  <summary>16-bit precision</summary>
+
+  ```python
+  # no code changes needed
+  trainer = Trainer(precision=16)
+  ```
+
+  <summary>Experiment managers</summary>
+
+  ```python
+  from pytorch_lightning import loggers
+
+  # tensorboard
+  trainer = Trainer(logger=TensorBoardLogger("logs/"))
+
+  # weights and biases
+  trainer = Trainer(logger=loggers.WandbLogger())
+
+  # comet
+  trainer = Trainer(logger=loggers.CometLogger())
+
+  # mlflow
+  trainer = Trainer(logger=loggers.MLFlowLogger())
+
+  # neptune
+  trainer = Trainer(logger=loggers.NeptuneLogger())
+
+  # ... and dozens more
+  ```
+
+  <summary>EarlyStopping</summary>
+
+  ```python
+  es = EarlyStopping(monitor="val_loss")
+  trainer = Trainer(callbacks=[es])
+  ```
+
+  <summary>Checkpointing</summary>
+
+  ```python
+  checkpointing = ModelCheckpoint(monitor="val_loss")
+  trainer = Trainer(callbacks=[checkpointing])
+  ```
+
+  <summary>Export to torchscript (JIT) (production use)</summary>
+
+  ```python
+  # torchscript
+  autoencoder = LitAutoEncoder()
+  torch.jit.save(autoencoder.to_torchscript(), "model.pt")
+  ```
+
+  <summary>Export to ONNX (production use)</summary>
+
+  ```python
+  # onnx
+  with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as tmpfile:
+      autoencoder = LitAutoEncoder()
+      input_sample = torch.randn((1, 64))
+      autoencoder.to_onnx(tmpfile.name, input_sample, export_params=True)
+      os.path.isfile(tmpfile.name)
+  ```
+
+  </details>
+
+  ### Pro-level control of optimization (advanced users)
+
+  For complex/professional level work, you have optional full control of the optimizers.
+
+  ```python
+  class LitAutoEncoder(pl.LightningModule):
+      def __init__(self):
+          super().__init__()
+          self.automatic_optimization = False
+
+      def training_step(self, batch, batch_idx):
+          # access your optimizers with use_pl_optimizer=False. Default is True
+          opt_a, opt_b = self.optimizers(use_pl_optimizer=True)
+
+          loss_a = ...
+          self.manual_backward(loss_a, opt_a)
+          opt_a.step()
+          opt_a.zero_grad()
+
+          loss_b = ...
+          self.manual_backward(loss_b, opt_b, retain_graph=True)
+          self.manual_backward(loss_b, opt_b)
+          opt_b.step()
+          opt_b.zero_grad()
+  ```
+
+  ______________________________________________________________________
+
+  ## Advantages over unstructured PyTorch
+
+  - Models become hardware agnostic
+  - Code is clear to read because engineering code is abstracted away
+  - Easier to reproduce
+  - Make fewer mistakes because lightning handles the tricky engineering
+  - Keeps all the flexibility (LightningModules are still PyTorch modules), but removes a ton of boilerplate
+  - Lightning has dozens of integrations with popular machine learning tools.
+  - [Tested rigorously with every new PR](https://github.com/Lightning-AI/lightning/tree/master/tests). We test every combination of PyTorch and Python supported versions, every OS, multi GPUs and even TPUs.
+  - Minimal running speed overhead (about 300 ms per epoch compared with pure PyTorch).
+
+  ______________________________________________________________________
+
+  ## Examples
+
+  ###### Self-supervised Learning
+
+  - [CPC transforms](https://lightning-bolts.readthedocs.io/en/stable/transforms/self_supervised.html#cpc-transforms)
+  - [Moco v2 tranforms](https://lightning-bolts.readthedocs.io/en/stable/transforms/self_supervised.html#moco-v2-transforms)
+  - [SimCLR transforms](https://lightning-bolts.readthedocs.io/en/stable/transforms/self_supervised.html#simclr-transforms)
+
+  ###### Convolutional Architectures
+
+  - [GPT-2](https://lightning-bolts.readthedocs.io/en/stable/models/convolutional.html#gpt-2)
+  - [UNet](https://lightning-bolts.readthedocs.io/en/stable/models/convolutional.html#unet)
+
+  ###### Reinforcement Learning
+
+  - [DQN Loss](https://lightning-bolts.readthedocs.io/en/stable/losses.html#dqn-loss)
+  - [Double DQN Loss](https://lightning-bolts.readthedocs.io/en/stable/losses.html#double-dqn-loss)
+  - [Per DQN Loss](https://lightning-bolts.readthedocs.io/en/stable/losses.html#per-dqn-loss)
+
+  ###### GANs
+
+  - [Basic GAN](https://lightning-bolts.readthedocs.io/en/stable/models/gans.html#basic-gan)
+  - [DCGAN](https://lightning-bolts.readthedocs.io/en/stable/models/gans.html#dcgan)
+
+  ###### Classic ML
+
+  - [Logistic Regression](https://lightning-bolts.readthedocs.io/en/stable/models/classic_ml.html#logistic-regression)
+  - [Linear Regression](https://lightning-bolts.readthedocs.io/en/stable/models/classic_ml.html#linear-regression)
+
+  ______________________________________________________________________
+
+  ### [Read more about PyTorch Lightning](src/pytorch_lightning/README.md)
+
+</details>
+
 
 ## Build AI products with Lightning Apps
 
@@ -57,34 +387,98 @@ Once you're done building models, publish a paper demo or build a full productio
     <img src="https://pl-public-data.s3.amazonaws.com/assets_lightning/lightning-apps-teaser.png" width="80%">
 </div>
 
+<details>
+  <summary>Learn more about apps</summary>
+  
+  Lightning apps allow you to build machine learning components that can plug into existing ML workflows. A Lightning component organizes arbitrary code to run on the cloud, manage its own infrastructure, cloud costs, networking, and more. Focus on component logic and not engineering.
+
+  Use components on their own, or compose them into full-stack AI apps with our next-generation Lightning orchestrator. to package your code into Lightning components which can plug into your existing ML workflows.
+
+  
+  ## Run your first Lightning App
+
+  1. Install a simple training and deployment app by typing:
+
+  ```bash
+  lightning install app lightning/quick-start
+  ```
+
+  2. If everything was successful, move into the new directory:
+
+  ```bash
+  cd lightning-quick-start
+  ```
+
+  3. Run the app locally
+
+  ```bash
+  lightning run app app.py
+  ```
+
+  4. Alternatively, run it on the public Lightning Cloud to share your app!
+
+  ```bash
+  lightning run app app.py --cloud
+  ```
+  
+  Apps run the same on the cloud and locally on your choice of hardware.
+
+  # install lightning
+  pip install lightning
+
+  # run the app on the --cloud
+  lightning run app app.py --setup --cloud
+
+  [Read this guide](https://lightning.ai/docs/stable/levels/basic/) to learn the basics of Lightning Apps in 15 minutes.
+
+# Features
+
+Lightning Apps consist of a root [LightningFlow](https://lightning.ai/docs/stable/glossary/app_tree.html) component, that optionally contains a tree of 2 types of components: [LightningFlow](https://lightning.ai/lightning-docs/core_api/lightning_flow.html) 🌊 and [LightningWork](https://lightning.ai/lightning-docs/core_api/lightning_work/) ⚒️. Key functionality includes:
+
+- A shared state between components.
+- A constantly running event loop for reactivity.
+- Dynamic attachment of components at runtime.
+- Start and stop functionality of your works.
+
+Lightning Apps can run [locally](https://lightning.ai/lightning-docs/workflows/run_on_private_cloud.html) 💻 or [on the cloud](https://lightning.ai/lightning-docs/core_api/lightning_work/compute.html) 🌩️.
+
+Easy communication 🛰️ between components is supported with:
+
+- [Directional state updates](https://lightning.ai/lightning-docs/core_api/lightning_app/communication.html?highlight=directional%20state) from the Works to the Flow creating an event: When creating interactive apps, you will likely want your components to share information with each other. You might to rely on that information to control their execution, share progress in the UI, trigger a sequence of operations, or more.
+- [Storage](https://lightning.ai/lightning-docs/api_reference/storage.html): The Lightning Storage system makes it easy to share files between LightningWork so you can run your app both locally and in the cloud without changing the code.
+  - [Path](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.path.Path.html#lightning_app.storage.path.Path): The Path object is a reference to a specific file or directory from a LightningWork and can be used to transfer those files to another LightningWork (one way, from source to destination).
+  - [Payload](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.payload.Payload.html#lightning_app.storage.payload.Payload): The Payload object enables transferring of Python objects from one work to another in a similar fashion as Path.
+  - [Drive](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.drive.Drive.html#lightning_app.storage.drive.Drive): The Drive object provides a central place for your components to share data. The drive acts as an isolated folder and any component can access it by knowing its name.
+
+Lightning Apps have built-in support for [adding UIs](https://lightning.ai/lightning-docs/workflows/add_web_ui/) 🎨:
+
+- [StaticWebFrontEnd](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.frontend.web.StaticWebFrontend.html#lightning_app.frontend.web.StaticWebFrontend): A frontend that serves static files from a directory using FastAPI.
+- [StreamlitFrontend](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.frontend.stream_lit.StreamlitFrontend.html#lightning_app.frontend.stream_lit.StreamlitFrontend): A frontend for wrapping Streamlit code in your LightingFlow.
+- [ServeGradio](https://lightning.ai/docs/stable/api_reference/generated/lightning_app.components.serve.gradio_server.ServeGradio.html#servegradio): This class enables you to quickly create a `gradio` based UI for your Lightning App.
+
+[Scheduling](https://lightning.ai/lightning-docs/glossary/scheduling.html) ⏲️: The Lightning Scheduling system makes it easy to schedule your components execution with any arbitrary conditions.
+
+Advanced users who need full control over the environment a LightningWork runs in can [specify a custom Docker image](https://lightning.ai/lightning-docs/glossary/build_config/build_config_advanced.html?highlight=docker) 🐋 that will be deployed in the cloud.
+
+[Environment variables](https://lightning.ai/lightning-docs/glossary/environment_variables.html?highlight=environment%20variables) 💬: If your app is using secrets or values, such as API keys or access tokens, use environment variables to avoid sticking them in the source code.
+
+Ready to use [built-in components](https://lightning.ai/lightning-docs/api_reference/components.html?highlight=built%20components) 🧱:
+
+- [PopenPythonScript](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.components.python.popen.PopenPythonScript.html#lightning_app.components.python.popen.PopenPythonScript): This class enables you to easily run a Python Script.
+- [ModelInferenceAPI](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.components.serve.serve.ModelInferenceAPI.html#lightning_app.components.serve.serve.ModelInferenceAPI): This class enables you to easily get your model served.
+
+
 ### [Learn more about Lightning Apps](src/lightning_app/README.md)
-
-______________________________________________________________________
-
-## Lightning Design Philosophy
-
-Lightning structures PyTorch code with these principles:
-
-<div align="center">
-  <img src="https://pl-bolts-doc-images.s3.us-east-2.amazonaws.com/philosophies.jpg" max-height="250px">
-</div>
-
-Lightning forces the following structure to your code which makes it reusable and shareable:
-
-- Research code (the LightningModule).
-- Engineering code (you delete, and is handled by the Trainer).
-- Non-essential research code (logging, etc... this goes in Callbacks).
-- Data (use PyTorch DataLoaders or organize them into a LightningDataModule).
-
-Once you do this, you can train on multiple-GPUs, TPUs, CPUs and even in 16-bit precision without changing your code!
-
-[Get started in just 15 minutes](https://pytorch-lightning.readthedocs.io/en/latest/starter/introduction.html)
+  
+</details>
 
 ______________________________________________________________________
 
 ## Continuous Integration
 
 Lightning is rigorously tested across multiple CPUs, GPUs, TPUs, IPUs, and HPUs and against major Python and PyTorch versions.
+
+###### \*Codecov is > 90%+ but build delays may show less
 
 <details>
   <summary>Current build statuses</summary>
@@ -106,14 +500,12 @@ Lightning is rigorously tested across multiple CPUs, GPUs, TPUs, IPUs, and HPUs 
 
 ______________________________________________________________________
 
-## How To Use
-
-### Step 0: Install
+## Install
 
 Simple installation from PyPI
 
 ```bash
-pip install pytorch-lightning
+pip install lightning
 ```
 
 <!-- following section will be skipped from PyPI description -->
@@ -125,13 +517,13 @@ pip install pytorch-lightning
 #### Install with optional dependencies
 
 ```bash
-pip install pytorch-lightning['extra']
+pip install lightning['extra']
 ```
 
 #### Conda
 
 ```bash
-conda install pytorch-lightning -c conda-forge
+conda install lightning -c conda-forge
 ```
 
 #### Install stable version
@@ -159,226 +551,6 @@ pip install -iU https://test.pypi.org/simple/ pytorch-lightning
 </details>
 <!-- end skipping PyPI description -->
 
-### Step 1: Add these imports
-
-```python
-import os
-import torch
-from torch import nn
-import torch.nn.functional as F
-from torchvision.datasets import MNIST
-from torch.utils.data import DataLoader, random_split
-from torchvision import transforms
-import pytorch_lightning as pl
-```
-
-### Step 2: Define a LightningModule (nn.Module subclass)
-
-A LightningModule defines a full *system* (ie: a GAN, autoencoder, BERT or a simple Image Classifier).
-
-```python
-class LitAutoEncoder(pl.LightningModule):
-    def __init__(self):
-        super().__init__()
-        self.encoder = nn.Sequential(nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 3))
-        self.decoder = nn.Sequential(nn.Linear(3, 128), nn.ReLU(), nn.Linear(128, 28 * 28))
-
-    def forward(self, x):
-        # in lightning, forward defines the prediction/inference actions
-        embedding = self.encoder(x)
-        return embedding
-
-    def training_step(self, batch, batch_idx):
-        # training_step defines the train loop. It is independent of forward
-        x, y = batch
-        x = x.view(x.size(0), -1)
-        z = self.encoder(x)
-        x_hat = self.decoder(z)
-        loss = F.mse_loss(x_hat, x)
-        self.log("train_loss", loss)
-        return loss
-
-    def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        return optimizer
-```
-
-**Note: Training_step defines the training loop. Forward defines how the LightningModule behaves during inference/prediction.**
-
-### Step 3: Train!
-
-```python
-dataset = MNIST(os.getcwd(), download=True, transform=transforms.ToTensor())
-train, val = random_split(dataset, [55000, 5000])
-
-autoencoder = LitAutoEncoder()
-trainer = pl.Trainer()
-trainer.fit(autoencoder, DataLoader(train), DataLoader(val))
-```
-
-## Advanced features
-
-Lightning has over [40+ advanced features](https://pytorch-lightning.readthedocs.io/en/latest/common/trainer.html#trainer-flags) designed for professional AI research at scale.
-
-Here are some examples:
-
-<div align="center">
-  <img src="https://pl-bolts-doc-images.s3.us-east-2.amazonaws.com/features_2.jpg" max-height="600px">
-</div>
-
-<details>
-  <summary>Highlighted feature code snippets</summary>
-
-```python
-# 8 GPUs
-# no code changes needed
-trainer = Trainer(max_epochs=1, accelerator="gpu", devices=8)
-
-# 256 GPUs
-trainer = Trainer(max_epochs=1, accelerator="gpu", devices=8, num_nodes=32)
-```
-
-<summary>Train on TPUs without code changes</summary>
-
-```python
-# no code changes needed
-trainer = Trainer(accelerator="tpu", devices=8)
-```
-
-<summary>16-bit precision</summary>
-
-```python
-# no code changes needed
-trainer = Trainer(precision=16)
-```
-
-<summary>Experiment managers</summary>
-
-```python
-from pytorch_lightning import loggers
-
-# tensorboard
-trainer = Trainer(logger=TensorBoardLogger("logs/"))
-
-# weights and biases
-trainer = Trainer(logger=loggers.WandbLogger())
-
-# comet
-trainer = Trainer(logger=loggers.CometLogger())
-
-# mlflow
-trainer = Trainer(logger=loggers.MLFlowLogger())
-
-# neptune
-trainer = Trainer(logger=loggers.NeptuneLogger())
-
-# ... and dozens more
-```
-
-<summary>EarlyStopping</summary>
-
-```python
-es = EarlyStopping(monitor="val_loss")
-trainer = Trainer(callbacks=[es])
-```
-
-<summary>Checkpointing</summary>
-
-```python
-checkpointing = ModelCheckpoint(monitor="val_loss")
-trainer = Trainer(callbacks=[checkpointing])
-```
-
-<summary>Export to torchscript (JIT) (production use)</summary>
-
-```python
-# torchscript
-autoencoder = LitAutoEncoder()
-torch.jit.save(autoencoder.to_torchscript(), "model.pt")
-```
-
-<summary>Export to ONNX (production use)</summary>
-
-```python
-# onnx
-with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as tmpfile:
-    autoencoder = LitAutoEncoder()
-    input_sample = torch.randn((1, 64))
-    autoencoder.to_onnx(tmpfile.name, input_sample, export_params=True)
-    os.path.isfile(tmpfile.name)
-```
-
-</details>
-
-### Pro-level control of optimization (advanced users)
-
-For complex/professional level work, you have optional full control of the optimizers.
-
-```python
-class LitAutoEncoder(pl.LightningModule):
-    def __init__(self):
-        super().__init__()
-        self.automatic_optimization = False
-
-    def training_step(self, batch, batch_idx):
-        # access your optimizers with use_pl_optimizer=False. Default is True
-        opt_a, opt_b = self.optimizers(use_pl_optimizer=True)
-
-        loss_a = ...
-        self.manual_backward(loss_a, opt_a)
-        opt_a.step()
-        opt_a.zero_grad()
-
-        loss_b = ...
-        self.manual_backward(loss_b, opt_b, retain_graph=True)
-        self.manual_backward(loss_b, opt_b)
-        opt_b.step()
-        opt_b.zero_grad()
-```
-
-______________________________________________________________________
-
-## Advantages over unstructured PyTorch
-
-- Models become hardware agnostic
-- Code is clear to read because engineering code is abstracted away
-- Easier to reproduce
-- Make fewer mistakes because lightning handles the tricky engineering
-- Keeps all the flexibility (LightningModules are still PyTorch modules), but removes a ton of boilerplate
-- Lightning has dozens of integrations with popular machine learning tools.
-- [Tested rigorously with every new PR](https://github.com/Lightning-AI/lightning/tree/master/tests). We test every combination of PyTorch and Python supported versions, every OS, multi GPUs and even TPUs.
-- Minimal running speed overhead (about 300 ms per epoch compared with pure PyTorch).
-
-______________________________________________________________________
-
-## Examples
-
-###### Self-supervised Learning
-
-- [CPC transforms](https://lightning-bolts.readthedocs.io/en/stable/transforms/self_supervised.html#cpc-transforms)
-- [Moco v2 tranforms](https://lightning-bolts.readthedocs.io/en/stable/transforms/self_supervised.html#moco-v2-transforms)
-- [SimCLR transforms](https://lightning-bolts.readthedocs.io/en/stable/transforms/self_supervised.html#simclr-transforms)
-
-###### Convolutional Architectures
-
-- [GPT-2](https://lightning-bolts.readthedocs.io/en/stable/models/convolutional.html#gpt-2)
-- [UNet](https://lightning-bolts.readthedocs.io/en/stable/models/convolutional.html#unet)
-
-###### Reinforcement Learning
-
-- [DQN Loss](https://lightning-bolts.readthedocs.io/en/stable/losses.html#dqn-loss)
-- [Double DQN Loss](https://lightning-bolts.readthedocs.io/en/stable/losses.html#double-dqn-loss)
-- [Per DQN Loss](https://lightning-bolts.readthedocs.io/en/stable/losses.html#per-dqn-loss)
-
-###### GANs
-
-- [Basic GAN](https://lightning-bolts.readthedocs.io/en/stable/models/gans.html#basic-gan)
-- [DCGAN](https://lightning-bolts.readthedocs.io/en/stable/models/gans.html#dcgan)
-
-###### Classic ML
-
-- [Logistic Regression](https://lightning-bolts.readthedocs.io/en/stable/models/classic_ml.html#logistic-regression)
-- [Linear Regression](https://lightning-bolts.readthedocs.io/en/stable/models/classic_ml.html#linear-regression)
 
 ______________________________________________________________________
 
