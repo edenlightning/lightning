@@ -137,7 +137,7 @@ ______________________________________________________________________
 
 - You want to have all the engineering boilerplate handled for you- dozens of features like checkpointing, logging and early stopping out of the box. Less hassle, less error prone, easy to try different techniques and feaatures.
 - You want to have good defaults chosen for you- so you can have a better starting point.
-- You want to your code to be modular, readable and well structured- easy to share between projects and with collaborators.
+- You want your code to be modular, readable and well structured - easy to share between projects and with collaborators.
 
 ## Can I use Fabric with my LightningModule or Lightning Callback?
 
