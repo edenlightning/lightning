@@ -91,6 +91,8 @@ Fabric allows you to scale any PyTorch model to distributed machines while maint
 
 ## Train and deploy with PyTorch Lightning
 
+**NEW- Ligthning 2.0 is featuring a clean and stable API! Learn more here: <TODO: add migration guide>**
+
 PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code to decouple the science from the engineering.
 ![PT to PL](docs/source-pytorch/_static/images/general/pl_quick_start_full_compressed.gif)
 
