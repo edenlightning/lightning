@@ -9,7 +9,7 @@
 
 **The Deep Learning framework to train, deploy, and ship AI products Lightning fast.**
 
-**NEW- Ligthning 2.0 is featuring a clean and stable API! Learn more here: <TODO: add migration guide>**
+**NEW- Ligthning 2.0 is featuring a clean and stable API!**
 ______________________________________________________________________
 
 <p align="center">
@@ -20,7 +20,6 @@ ______________________________________________________________________
   <a href="https://pytorch-lightning.readthedocs.io/en/stable/">Docs</a> •
   <a href="#community">Community</a> •
   <a href="https://pytorch-lightning.readthedocs.io/en/stable/generated/CONTRIBUTING.html">Contribute</a> •
-  <a href="#license">License</a>
 </p>
 
 <!-- DO NOT ADD CONDA DOWNLOADS... README CHANGES MUST BE APPROVED BY EDEN OR WILL -->
@@ -355,7 +354,7 @@ Once you're done building models, publish a paper demo or build a full productio
 <details>
   <summary>Learn more about apps</summary>
   
-  Lightning apps allow you to build machine learning components that can plug into existing ML workflows. A Lightning component organizes arbitrary code to run on the cloud, manage its own infrastructure, cloud costs, networking, and more. Focus on component logic and not engineering.
+ Build machine learning components that can plug into existing ML workflows. A Lightning component organizes arbitrary code to run on the cloud, manage its own infrastructure, cloud costs, networking, and more. Focus on component logic and not engineering.
 
   Use components on their own, or compose them into full-stack AI apps with our next-generation Lightning orchestrator. to package your code into Lightning components which can plug into your existing ML workflows.
 
@@ -391,49 +390,10 @@ Once you're done building models, publish a paper demo or build a full productio
   
   Apps run the same on the cloud and locally on your choice of hardware.
 
-  # run the app on the --cloud
+  ## run the app on the --cloud
   lightning run app app.py --setup --cloud
 
-  [Read this guide](https://lightning.ai/docs/stable/levels/basic/) to learn the basics of Lightning Apps in 15 minutes.
-
-    # Features
-
-    Lightning Apps consist of a root [LightningFlow](https://lightning.ai/docs/stable/glossary/app_tree.html) component, that optionally contains a tree of 2 types of components: [LightningFlow](https://lightning.ai/lightning-docs/core_api/lightning_flow.html) 🌊 and [LightningWork](https://lightning.ai/lightning-docs/core_api/lightning_work/) ⚒️. Key functionality includes:
-
-    - A shared state between components.
-    - A constantly running event loop for reactivity.
-    - Dynamic attachment of components at runtime.
-    - Start and stop functionality of your works.
-
-    Lightning Apps can run [locally](https://lightning.ai/lightning-docs/workflows/run_on_private_cloud.html) 💻 or [on the cloud](https://lightning.ai/lightning-docs/core_api/lightning_work/compute.html) 🌩️.
-
-    Easy communication 🛰️ between components is supported with:
-
-    - [Directional state updates](https://lightning.ai/lightning-docs/core_api/lightning_app/communication.html?highlight=directional%20state) from the Works to the Flow creating an event: When creating interactive apps, you will likely want your components to share information with each other. You might to rely on that information to control their execution, share progress in the UI, trigger a sequence of operations, or more.
-    - [Storage](https://lightning.ai/lightning-docs/api_reference/storage.html): The Lightning Storage system makes it easy to share files between LightningWork so you can run your app both locally and in the cloud without changing the code.
-      - [Path](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.path.Path.html#lightning_app.storage.path.Path): The Path object is a reference to a specific file or directory from a LightningWork and can be used to transfer those files to another LightningWork (one way, from source to destination).
-      - [Payload](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.payload.Payload.html#lightning_app.storage.payload.Payload): The Payload object enables transferring of Python objects from one work to another in a similar fashion as Path.
-      - [Drive](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.drive.Drive.html#lightning_app.storage.drive.Drive): The Drive object provides a central place for your components to share data. The drive acts as an isolated folder and any component can access it by knowing its name.
-
-    Lightning Apps have built-in support for [adding UIs](https://lightning.ai/lightning-docs/workflows/add_web_ui/) 🎨:
-
-    - [StaticWebFrontEnd](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.frontend.web.StaticWebFrontend.html#lightning_app.frontend.web.StaticWebFrontend): A frontend that serves static files from a directory using FastAPI.
-    - [StreamlitFrontend](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.frontend.stream_lit.StreamlitFrontend.html#lightning_app.frontend.stream_lit.StreamlitFrontend): A frontend for wrapping Streamlit code in your LightingFlow.
-    - [ServeGradio](https://lightning.ai/docs/stable/api_reference/generated/lightning_app.components.serve.gradio_server.ServeGradio.html#servegradio): This class enables you to quickly create a `gradio` based UI for your Lightning App.
-
-    [Scheduling](https://lightning.ai/lightning-docs/glossary/scheduling.html) ⏲️: The Lightning Scheduling system makes it easy to schedule your components execution with any arbitrary conditions.
-
-    Advanced users who need full control over the environment a LightningWork runs in can [specify a custom Docker image](https://lightning.ai/lightning-docs/glossary/build_config/build_config_advanced.html?highlight=docker) 🐋 that will be deployed in the cloud.
-
-    [Environment variables](https://lightning.ai/lightning-docs/glossary/environment_variables.html?highlight=environment%20variables) 💬: If your app is using secrets or values, such as API keys or access tokens, use environment variables to avoid sticking them in the source code.
-
-    Ready to use [built-in components](https://lightning.ai/lightning-docs/api_reference/components.html?highlight=built%20components) 🧱:
-
-    - [PopenPythonScript](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.components.python.popen.PopenPythonScript.html#lightning_app.components.python.popen.PopenPythonScript): This class enables you to easily run a Python Script.
-    - [ModelInferenceAPI](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.components.serve.serve.ModelInferenceAPI.html#lightning_app.components.serve.serve.ModelInferenceAPI): This class enables you to easily get your model served.
-
-
-    ### [Learn more about Lightning Apps](src/lightning_app/README.md)
+  ### [Learn more about Lightning Apps](src/lightning_app/README.md)
   
 </details>
 
@@ -536,4 +496,4 @@ If you have any questions please:
 
 1. [Read the docs](https://pytorch-lightning.rtfd.io/en/latest).
 1. [Search through existing Discussions](https://github.com/Lightning-AI/lightning/discussions), or [add a new question](https://github.com/Lightning-AI/lightning/discussions/new)
-1. [Join our slack](https://www.pytorchlightning.ai/community).
+1. [Join our discord](https://discord.com/invite/tfXFetEZxv).
