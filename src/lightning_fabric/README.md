@@ -8,7 +8,7 @@ ______________________________________________________________________
 
 <p align="center">
   <a href="https://lightning.ai/">Website</a> •
-  <a href="https://pytorch-lightning.readthedocs.io/en/stable/fabric/">Docs</a> •
+  <a href="https://lightning.ai/docs/fabric/">Docs</a> •
   <a href="#getting-started">Getting started</a> •
   <a href="#faq">FAQ</a> •
   <a href="#asking-for-help">Help</a> •
