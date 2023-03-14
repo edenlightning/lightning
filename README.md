@@ -1,10 +1,15 @@
 <div align="center">
-<img src="https://github.com/likethecognac/images/blob/main/Icon_Color_WhiteBolt.png" width="85px">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://pl-public-data.s3.amazonaws.com/assets_lightning/LightningDark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://pl-public-data.s3.amazonaws.com/assets_lightning/LightningLight.png">
+    <img alt="Lightning" src="hhttps://pl-public-data.s3.amazonaws.com/assets_lightning/LightningDark.png" width="400" style="max-width: 100%;">
+  </picture>
+  <br/>
+  <br/>
 
 **The Deep Learning framework to train, deploy, and ship AI products Lightning fast.**
 
-**NEWS: PyTorch Lightning has been renamed Lightning!**
-
+**NEW- Ligthning 2.0 is featuring a clean and stable API! Learn more here: <TODO: add migration guide>**
 ______________________________________________________________________
 
 <p align="center">
@@ -36,62 +41,9 @@ ______________________________________________________________________
 -->
 
 </div>
-
 ______________________________________________________________________
 
-## Scale PyTorch With Fabric
-
-Fabric allows you to scale any PyTorch model to distributed machines while maintianing full control over your training loop. Just add a few lines of code and run on any device!
-
-<details>
-  <summary>Learn more about Fabric</summary>
-  
-  With just a few code changes, run any PyTorch model on any distributed hardware, no boilerplate!
-
-- Easily switch from running on CPU to GPU (Apple Silicon, CUDA, …), TPU, multi-GPU or even multi-node training
-- Use state-of-the-art distributed training strategies (DDP, FSDP, DeepSpeed) and mixed precision out of the box
-- All the device logic boilerplate is handled for you
-- Designed with multi-billion parameter models in mind
-- Build your own custom Trainer using Fabric primitives for training checkpointing, logging, and more
-
-```diff
-+ import lightning as L
-  import torch
-  import torch.nn as nn
-  from torch.utils.data import DataLoader, Dataset
-  class PyTorchModel(nn.Module):
-      ...
-  class PyTorchDataset(Dataset):
-      ...
-+ fabric = L.Fabric(accelerator="cuda", devices=8, strategy="ddp")
-+ fabric.launch()
-- device = "cuda" if torch.cuda.is_available() else "cpu
-  model = PyTorchModel(...)
-  optimizer = torch.optim.SGD(model.parameters())
-+ model, optimizer = fabric.setup(model, optimizer)
-  dataloader = DataLoader(PyTorchDataset(...), ...)
-+ dataloader = fabric.setup_dataloaders(dataloader)
-  model.train()
-  for epoch in range(num_epochs):
-      for batch in dataloader:
-          input, target = batch
--         input, target = input.to(device), target.to(device)
-          optimizer.zero_grad()
-          output = model(input)
-          loss = loss_fn(output, target)
--         loss.backward()
-+         fabric.backward(loss)
-          optimizer.step()
-          lr_scheduler.step()
-```
-
-### [Read more about Fabric](src/fabric/README.md)
-  
-</details>
-
 ## Train and deploy with PyTorch Lightning
-
-**NEW- Ligthning 2.0 is featuring a clean and stable API! Learn more here: <TODO: add migration guide>**
 
 PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code to decouple the science from the engineering.
 ![PT to PL](docs/source-pytorch/_static/images/general/pl_quick_start_full_compressed.gif)
@@ -99,61 +51,11 @@ PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code
 <details>
   <summary>How to use PyTorch Lightning</summary>
 
-
-  ### Step 0: Install
-
-  Simple installation from PyPI
-
-  ```bash
-  pip install pytorch-lightning
-  ```
-
-  <!-- following section will be skipped from PyPI description -->
-
-  <details>
-    <summary>Other installation options</summary>
-      <!-- following section will be skipped from PyPI description -->
-
-  #### Install with optional dependencies
-
-  ```bash
-  pip install pytorch-lightning['extra']
-  ```
-
-  #### Conda
-
-  ```bash
-  conda install pytorch-lightning -c conda-forge
-  ```
-
-  #### Install stable version
-
-  Install future release from the source
-
-  ```bash
-  pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/release/stable.zip -U
-  ```
-
-  #### Install bleeding-edge
-
-  Install nightly from the source (no guarantees)
-
-  ```bash
-  pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/master.zip -U
-  ```
-
-  or from testing PyPI
-
-  ```bash
-  pip install -iU https://test.pypi.org/simple/ pytorch-lightning
-  ```
-
-  </details>
-  <!-- end skipping PyPI description -->
-
   ### Step 1: Add these imports
 
   ```python
+  import lightning as L
+  
   import os
   import torch
   from torch import nn
@@ -161,7 +63,6 @@ PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code
   from torchvision.datasets import MNIST
   from torch.utils.data import DataLoader, random_split
   from torchvision import transforms
-  import pytorch_lightning as pl
   ```
 
   ### Step 2: Define a LightningModule (nn.Module subclass)
@@ -169,7 +70,7 @@ PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code
   A LightningModule defines a full *system* (ie: a GAN, autoencoder, BERT or a simple Image Classifier).
 
   ```python
-  class LitAutoEncoder(pl.LightningModule):
+  class LitAutoEncoder(L.LightningModule):
       def __init__(self):
           super().__init__()
           self.encoder = nn.Sequential(nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 3))
@@ -204,7 +105,7 @@ PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code
   train, val = random_split(dataset, [55000, 5000])
 
   autoencoder = LitAutoEncoder()
-  trainer = pl.Trainer()
+  trainer = L.Trainer()
   trainer.fit(autoencoder, DataLoader(train), DataLoader(val))
   ```
 
@@ -247,7 +148,7 @@ PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code
   <summary>Experiment managers</summary>
 
   ```python
-  from pytorch_lightning import loggers
+  from lightning import loggers
 
   # tensorboard
   trainer = Trainer(logger=TensorBoardLogger("logs/"))
@@ -307,7 +208,7 @@ PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code
   For complex/professional level work, you have optional full control of the optimizers.
 
   ```python
-  class LitAutoEncoder(pl.LightningModule):
+  class LitAutoEncoder(L.LightningModule):
       def __init__(self):
           super().__init__()
           self.automatic_optimization = False
@@ -378,7 +279,69 @@ PyTorch Lightning is just organized PyTorch- Lightning disentangles PyTorch code
 
 </details>
 
+______________________________________________________________________
 
+## Scale PyTorch With Lightning Fabric
+
+Fabric allows you to scale any PyTorch model to distributed machines while maintianing full control over your training loop. Just add a few lines of code and run on any device!
+Use this library for complex tasks like reinforcement learning, active learning, and transformers without losing control over your training code.
+
+<div align="center">
+    <img src="https://pl-public-data.s3.amazonaws.com/assets_lightning/continuum.png" width="80%">
+</div>
+
+
+<details>
+  <summary>Learn more about Fabric</summary>
+  
+  
+  
+  With just a few code changes, run any PyTorch model on any distributed hardware, no boilerplate!
+
+- Easily switch from running on CPU to GPU (Apple Silicon, CUDA, …), TPU, multi-GPU or even multi-node training
+- Use state-of-the-art distributed training strategies (DDP, FSDP, DeepSpeed) and mixed precision out of the box
+- All the device logic boilerplate is handled for you
+- Designed with multi-billion parameter models in mind
+- Build your own custom Trainer using Fabric primitives for training checkpointing, logging, and more
+
+```diff
++ import lightning as L
+  import torch
+  import torch.nn as nn
+  from torch.utils.data import DataLoader, Dataset
+  class PyTorchModel(nn.Module):
+      ...
+  class PyTorchDataset(Dataset):
+      ...
++ fabric = L.Fabric(accelerator="cuda", devices=8, strategy="ddp")
++ fabric.launch()
+- device = "cuda" if torch.cuda.is_available() else "cpu
+  model = PyTorchModel(...)
+  optimizer = torch.optim.SGD(model.parameters())
++ model, optimizer = fabric.setup(model, optimizer)
+  dataloader = DataLoader(PyTorchDataset(...), ...)
++ dataloader = fabric.setup_dataloaders(dataloader)
+  model.train()
+  for epoch in range(num_epochs):
+      for batch in dataloader:
+          input, target = batch
+-         input, target = input.to(device), target.to(device)
+          optimizer.zero_grad()
+          output = model(input)
+          loss = loss_fn(output, target)
+-         loss.backward()
++         fabric.backward(loss)
+          optimizer.step()
+          lr_scheduler.step()
+```
+
+
+### [Read more about Fabric](src/fabric/README.md)
+  
+</details>
+
+
+--------------------
 ## Build AI products with Lightning Apps
 
 Once you're done building models, publish a paper demo or build a full production end-to-end ML system with Lightning Apps. Lightning Apps remove the cloud infrastructure boilerplate so you can focus on solving the research or business problems. Lightning Apps can run on the Lightning Cloud, your own cluster or a private cloud.
@@ -402,6 +365,9 @@ Once you're done building models, publish a paper demo or build a full productio
   1. Install a simple training and deployment app by typing:
 
   ```bash
+  # install lightning
+  pip install lightning
+  
   lightning install app lightning/quick-start
   ```
 
@@ -425,52 +391,49 @@ Once you're done building models, publish a paper demo or build a full productio
   
   Apps run the same on the cloud and locally on your choice of hardware.
 
-  # install lightning
-  pip install lightning
-
   # run the app on the --cloud
   lightning run app app.py --setup --cloud
 
   [Read this guide](https://lightning.ai/docs/stable/levels/basic/) to learn the basics of Lightning Apps in 15 minutes.
 
-# Features
+    # Features
 
-Lightning Apps consist of a root [LightningFlow](https://lightning.ai/docs/stable/glossary/app_tree.html) component, that optionally contains a tree of 2 types of components: [LightningFlow](https://lightning.ai/lightning-docs/core_api/lightning_flow.html) 🌊 and [LightningWork](https://lightning.ai/lightning-docs/core_api/lightning_work/) ⚒️. Key functionality includes:
+    Lightning Apps consist of a root [LightningFlow](https://lightning.ai/docs/stable/glossary/app_tree.html) component, that optionally contains a tree of 2 types of components: [LightningFlow](https://lightning.ai/lightning-docs/core_api/lightning_flow.html) 🌊 and [LightningWork](https://lightning.ai/lightning-docs/core_api/lightning_work/) ⚒️. Key functionality includes:
 
-- A shared state between components.
-- A constantly running event loop for reactivity.
-- Dynamic attachment of components at runtime.
-- Start and stop functionality of your works.
+    - A shared state between components.
+    - A constantly running event loop for reactivity.
+    - Dynamic attachment of components at runtime.
+    - Start and stop functionality of your works.
 
-Lightning Apps can run [locally](https://lightning.ai/lightning-docs/workflows/run_on_private_cloud.html) 💻 or [on the cloud](https://lightning.ai/lightning-docs/core_api/lightning_work/compute.html) 🌩️.
+    Lightning Apps can run [locally](https://lightning.ai/lightning-docs/workflows/run_on_private_cloud.html) 💻 or [on the cloud](https://lightning.ai/lightning-docs/core_api/lightning_work/compute.html) 🌩️.
 
-Easy communication 🛰️ between components is supported with:
+    Easy communication 🛰️ between components is supported with:
 
-- [Directional state updates](https://lightning.ai/lightning-docs/core_api/lightning_app/communication.html?highlight=directional%20state) from the Works to the Flow creating an event: When creating interactive apps, you will likely want your components to share information with each other. You might to rely on that information to control their execution, share progress in the UI, trigger a sequence of operations, or more.
-- [Storage](https://lightning.ai/lightning-docs/api_reference/storage.html): The Lightning Storage system makes it easy to share files between LightningWork so you can run your app both locally and in the cloud without changing the code.
-  - [Path](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.path.Path.html#lightning_app.storage.path.Path): The Path object is a reference to a specific file or directory from a LightningWork and can be used to transfer those files to another LightningWork (one way, from source to destination).
-  - [Payload](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.payload.Payload.html#lightning_app.storage.payload.Payload): The Payload object enables transferring of Python objects from one work to another in a similar fashion as Path.
-  - [Drive](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.drive.Drive.html#lightning_app.storage.drive.Drive): The Drive object provides a central place for your components to share data. The drive acts as an isolated folder and any component can access it by knowing its name.
+    - [Directional state updates](https://lightning.ai/lightning-docs/core_api/lightning_app/communication.html?highlight=directional%20state) from the Works to the Flow creating an event: When creating interactive apps, you will likely want your components to share information with each other. You might to rely on that information to control their execution, share progress in the UI, trigger a sequence of operations, or more.
+    - [Storage](https://lightning.ai/lightning-docs/api_reference/storage.html): The Lightning Storage system makes it easy to share files between LightningWork so you can run your app both locally and in the cloud without changing the code.
+      - [Path](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.path.Path.html#lightning_app.storage.path.Path): The Path object is a reference to a specific file or directory from a LightningWork and can be used to transfer those files to another LightningWork (one way, from source to destination).
+      - [Payload](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.payload.Payload.html#lightning_app.storage.payload.Payload): The Payload object enables transferring of Python objects from one work to another in a similar fashion as Path.
+      - [Drive](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.storage.drive.Drive.html#lightning_app.storage.drive.Drive): The Drive object provides a central place for your components to share data. The drive acts as an isolated folder and any component can access it by knowing its name.
 
-Lightning Apps have built-in support for [adding UIs](https://lightning.ai/lightning-docs/workflows/add_web_ui/) 🎨:
+    Lightning Apps have built-in support for [adding UIs](https://lightning.ai/lightning-docs/workflows/add_web_ui/) 🎨:
 
-- [StaticWebFrontEnd](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.frontend.web.StaticWebFrontend.html#lightning_app.frontend.web.StaticWebFrontend): A frontend that serves static files from a directory using FastAPI.
-- [StreamlitFrontend](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.frontend.stream_lit.StreamlitFrontend.html#lightning_app.frontend.stream_lit.StreamlitFrontend): A frontend for wrapping Streamlit code in your LightingFlow.
-- [ServeGradio](https://lightning.ai/docs/stable/api_reference/generated/lightning_app.components.serve.gradio_server.ServeGradio.html#servegradio): This class enables you to quickly create a `gradio` based UI for your Lightning App.
+    - [StaticWebFrontEnd](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.frontend.web.StaticWebFrontend.html#lightning_app.frontend.web.StaticWebFrontend): A frontend that serves static files from a directory using FastAPI.
+    - [StreamlitFrontend](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.frontend.stream_lit.StreamlitFrontend.html#lightning_app.frontend.stream_lit.StreamlitFrontend): A frontend for wrapping Streamlit code in your LightingFlow.
+    - [ServeGradio](https://lightning.ai/docs/stable/api_reference/generated/lightning_app.components.serve.gradio_server.ServeGradio.html#servegradio): This class enables you to quickly create a `gradio` based UI for your Lightning App.
 
-[Scheduling](https://lightning.ai/lightning-docs/glossary/scheduling.html) ⏲️: The Lightning Scheduling system makes it easy to schedule your components execution with any arbitrary conditions.
+    [Scheduling](https://lightning.ai/lightning-docs/glossary/scheduling.html) ⏲️: The Lightning Scheduling system makes it easy to schedule your components execution with any arbitrary conditions.
 
-Advanced users who need full control over the environment a LightningWork runs in can [specify a custom Docker image](https://lightning.ai/lightning-docs/glossary/build_config/build_config_advanced.html?highlight=docker) 🐋 that will be deployed in the cloud.
+    Advanced users who need full control over the environment a LightningWork runs in can [specify a custom Docker image](https://lightning.ai/lightning-docs/glossary/build_config/build_config_advanced.html?highlight=docker) 🐋 that will be deployed in the cloud.
 
-[Environment variables](https://lightning.ai/lightning-docs/glossary/environment_variables.html?highlight=environment%20variables) 💬: If your app is using secrets or values, such as API keys or access tokens, use environment variables to avoid sticking them in the source code.
+    [Environment variables](https://lightning.ai/lightning-docs/glossary/environment_variables.html?highlight=environment%20variables) 💬: If your app is using secrets or values, such as API keys or access tokens, use environment variables to avoid sticking them in the source code.
 
-Ready to use [built-in components](https://lightning.ai/lightning-docs/api_reference/components.html?highlight=built%20components) 🧱:
+    Ready to use [built-in components](https://lightning.ai/lightning-docs/api_reference/components.html?highlight=built%20components) 🧱:
 
-- [PopenPythonScript](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.components.python.popen.PopenPythonScript.html#lightning_app.components.python.popen.PopenPythonScript): This class enables you to easily run a Python Script.
-- [ModelInferenceAPI](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.components.serve.serve.ModelInferenceAPI.html#lightning_app.components.serve.serve.ModelInferenceAPI): This class enables you to easily get your model served.
+    - [PopenPythonScript](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.components.python.popen.PopenPythonScript.html#lightning_app.components.python.popen.PopenPythonScript): This class enables you to easily run a Python Script.
+    - [ModelInferenceAPI](https://lightning.ai/lightning-docs/api_reference/generated/lightning_app.components.serve.serve.ModelInferenceAPI.html#lightning_app.components.serve.serve.ModelInferenceAPI): This class enables you to easily get your model served.
 
 
-### [Learn more about Lightning Apps](src/lightning_app/README.md)
+    ### [Learn more about Lightning Apps](src/lightning_app/README.md)
   
 </details>
 
