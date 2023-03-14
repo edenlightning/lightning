@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://lightningaidev.wpengine.com/wp-content/uploads/2023/02/fabric_logo.svg" width="400px">
+<img src="https://pl-public-data.s3.amazonaws.com/assets_lightning/fabric_logo.png" width="400px">
 
 **Fabric is the fast and lightweight way to scale PyTorch models without boilerplate**
 
@@ -84,7 +84,7 @@ ______________________________________________________________________
 pip install -U lightning
 ```
 
-## Converrt your PyTorch to Fabric
+## Convert your PyTorch to Fabric
 
 1. Create the `Fabric` object at the beginning of your training code.
 
@@ -143,7 +143,7 @@ ______________________________________________________________________
 
 Yes :) Fabric works with PyTorch LightningModules and Callbacks, so you can choose how to structure your code and reuse existing models and callbacks as you wish. Read more [here](https://pytorch-lightning.readthedocs.io/en/stable/fabric/fundamentals/code_structure.html).
 
-<img src="https://lightningaidev.wpengine.com/wp-content/uploads/2023/02/Screen-Shot-2023-02-15-at-4.06.18-PM.png" width="800px">
+<img src="https://pl-public-data.s3.amazonaws.com/assets_lightning/continuum.png" width="800px">
 
 ______________________________________________________________________
 
@@ -165,4 +165,4 @@ If you have any questions please:
 
 1. [Read the docs](https://pytorch-lightning.readthedocs.io/en/stable/fabric).
 1. [Ask a question in our forum](https://lightning.ai/forums/).
-1. [Join our Slack community](https://www.pytorchlightning.ai/community).
+1. [Join our discord community](https://discord.com/invite/tfXFetEZxv).
